@@ -11,8 +11,8 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include "raymath.h"
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 #include <vector>
-#include "../build/build_files/World.h"
-#include "../build/build_files/Random.h"
+#include "World.h"
+#include "Random.h"
 
 #include <string>
 

@@ -13,6 +13,7 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include <vector>
 #include "World.h"
 #include "Random.h"
+#include "GravitationalEffector.h"
 
 #include <string>
 
@@ -33,6 +34,8 @@ int main ()
 	SetTargetFPS(60);
 
 	World world;
+	world.AddEffector(new GravitationalEffector(10000.0f));
+
 
 	float timeAccum = 0.0f;
 	float fixedTimeStep = 1.0f / 60.0f;
@@ -57,8 +60,8 @@ int main ()
 			body.size = GetRandomValue(5, 25);
 
 			body.restitution = GetRandomFloat() * 0.1f + .9f;
-			body.mass = body.size * 0.1f;
-			//body.gravityScale = GetRandomFloat() * 2.0f * body.mass;
+			body.mass = body.size;
+			body.gravityScale = GetRandomFloat() * 2.0f * body.mass;
 			//body.damping = GetRandomFloat() * 0.01f + 0.99f;
 
 

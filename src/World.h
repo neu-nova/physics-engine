@@ -23,5 +23,5 @@ private:
 	Vector2 gravity = { 0, 9.81f };
 
 	std::vector<Body> bodies;
-	std::vector<class Effector*> Effectors;
+	std::vector<class Effector*> effectors;
 };

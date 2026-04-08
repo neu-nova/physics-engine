@@ -8,7 +8,7 @@ void World::Step(float dt)
 
     for (Body& body : bodies) body.AddForce(gravity * 300.0f);
 
-    for (auto& effector : Effectors) effector->Apply(bodies);
+    for (auto& effector : effectors) effector->Apply(bodies);
 
     if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) || IsKeyDown(KEY_X))
     {
@@ -70,5 +70,5 @@ void World::AddBody(Body& body)
 
 void World::AddEffector(Effector* effector)
 {
-	Effectors.push_back(effector);
+	effectors.push_back(effector);
 }

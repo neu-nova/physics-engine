@@ -6,7 +6,9 @@
 void World::Step(float dt)
 {
 
-    for (Body& body : bodies) body.AddForce(gravity * 300.0f);
+	for (Body& body : bodies) body.acceleration = { 0,0 };
+	//for (Body& body : bodies) body.AddForce(gravity * body.mass * body.gravityScale, Acceleration);
+
 
     for (auto& effector : effectors) effector->Apply(bodies);
 
@@ -38,6 +40,10 @@ void World::Draw() const
 
 void World::UpdateCollision()
 {
+	contacts.clear();
+	CreateContacts(bodies, contacts);
+	SeparateContacts(contacts);
+
 	for (Body& body : bodies)
 	{
 		if (body.position.x + body.size > GetScreenWidth())

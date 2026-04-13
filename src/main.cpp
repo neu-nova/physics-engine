@@ -34,7 +34,7 @@ int main ()
 	SetTargetFPS(60);
 
 	World world;
-	world.AddEffector(new GravitationalEffector(10000.0f));
+	world.AddEffector(new GravitationalEffector(500.0f));
 
 
 	float timeAccum = 0.0f;
@@ -53,15 +53,17 @@ int main ()
 			Vector2 dir;
 			dir.x = cosf(angle);
 			dir.y = sinf(angle);
+			//body.velocity = dir * (GetRandomFloat() * 500 + 50);
+			//body.AddForce(dir * (GetRandomFloat() * 500 + 50), VelocityChange);
 
 
-			body.velocity = dir * (GetRandomFloat() * 500 + 50);
 			body.acceleration = { 0, 0 };
-			body.size = GetRandomValue(5, 25);
+			body.size = GetRandomValue(20, 25);
 
-			body.restitution = GetRandomFloat() * 0.1f + .9f;
+			body.restitution = GetRandomFloat() * 0.05f + .95f;
 			body.mass = body.size;
-			body.gravityScale = GetRandomFloat() * 2.0f * body.mass;
+			body.inverseMass = (body.body == Static) ? 0 : 1.0f / body.mass;
+			body.gravityScale = GetRandomFloat() * 0.5f * body.mass + 0.5f;
 			//body.damping = GetRandomFloat() * 0.01f + 0.99f;
 
 

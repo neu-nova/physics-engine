@@ -1,5 +1,6 @@
 #pragma once
 #include "Body.h"
+#include "Collision.h"
 #include <vector>
 
 class World
@@ -24,4 +25,5 @@ private:
 
 	std::vector<Body> bodies;
 	std::vector<class Effector*> effectors;
+	std::vector<Contact> contacts;
 };

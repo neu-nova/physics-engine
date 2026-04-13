@@ -34,37 +34,54 @@ int main ()
 	SetTargetFPS(60);
 
 	World world;
-	world.AddEffector(new GravitationalEffector(500.0f));
+	world.AddEffector(new GravitationalEffector(5000.0f));
 
 
 	float timeAccum = 0.0f;
 	float fixedTimeStep = 1.0f / 60.0f;
+
+	BodyType type = Dynamic;
+
+	float currentrestitution = 0.5f;
 	
 	// game loop
 	while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
 	{
 		float dt = GetFrameTime();
 
+		if (IsKeyDown(KEY_Q)) type = Static;
+		else if (IsKeyDown(KEY_W)) type = Dynamic;
+
+		if (IsKeyDown(KEY_C)) world.GetBodies().clear();
+			
+		if (IsKeyDown(KEY_A)) currentrestitution = 1.0f;
+		else if (IsKeyDown(KEY_S)) currentrestitution = 0.5f;
+		else if (IsKeyDown(KEY_D)) currentrestitution = 0.0f;
+
 		if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) || (IsKeyDown(KEY_GRAVE)) && (IsMouseButtonDown(MOUSE_BUTTON_LEFT)))
 		{
 			Body body;
 			body.position = GetMousePosition();
-			float angle = GetRandomFloat() * 2 * PI;
-			Vector2 dir;
-			dir.x = cosf(angle);
-			dir.y = sinf(angle);
-			//body.velocity = dir * (GetRandomFloat() * 500 + 50);
-			//body.AddForce(dir * (GetRandomFloat() * 500 + 50), VelocityChange);
+			body.body = type;
+			//float angle = GetRandomFloat() * 2 * PI;
+			//Vector2 dir;
+			//dir.x = cosf(angle);
+			//dir.y = sinf(angle);
+			//body.velocity = dir * (GetRandomFloat() * 100 + 50);
+			//body.AddForce(dir * (GetRandomFloat() * 100 + 50), VelocityChange);
+			if (body.body == Dynamic)
+				body.AddForce({ 100,0 }, VelocityChange);
 
 
 			body.acceleration = { 0, 0 };
 			body.size = GetRandomValue(20, 25);
 
-			body.restitution = GetRandomFloat() * 0.05f + .95f;
+			//body.restitution = GetRandomFloat() * 0.05f + .95f;
+			body.restitution = currentrestitution;
 			body.mass = body.size;
 			body.inverseMass = (body.body == Static) ? 0 : 1.0f / body.mass;
-			body.gravityScale = GetRandomFloat() * 0.5f * body.mass + 0.5f;
-			body.damping = GetRandomFloat() * 0.01f + 0.99f;
+			body.gravityScale = 0.0f;
+			//body.damping = GetRandomFloat() * 0.005f + 0.995f;
 
 
 			world.AddBody(body);
@@ -95,6 +112,23 @@ int main ()
 
 		world.Draw();
 		DrawText(fpstext.c_str(), 10, 10, 20, WHITE);
+
+		switch (type)
+		{
+			case Static:
+				DrawText("Static", 10, 40, 20, WHITE);
+				break;
+			case Dynamic:
+				DrawText("Dynamic", 10, 40, 20, WHITE);
+				break;
+		}
+
+		if (currentrestitution == 1.0f)
+			DrawText("Restitution: 1.0", 10, 70, 20, WHITE);
+		else if (currentrestitution == 0.5f)
+			DrawText("Restitution: 0.5", 10, 70, 20, WHITE);
+		else if (currentrestitution == 0.0f)
+			DrawText("Restitution: 0.0", 10, 70, 20, WHITE);
 		
 		// end the frame and get ready for the next one  (display frame, poll input, etc...)
 		EndDrawing();

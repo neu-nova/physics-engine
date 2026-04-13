@@ -27,7 +27,7 @@ void CreateContacts(std::vector<Body>& bodies, std::vector<Contact>& contacts)
 				contact.bodyA = &bodyA;
 				contact.bodyB = &bodyB;
 
-				Vector2 direction = bodyB.position - bodyA.position;
+				Vector2 direction = bodyA.position - bodyB.position;
 				float distanceSqr = Vector2LengthSqr(direction);
 				if (distanceSqr <= EPSILON)
 				{
@@ -49,11 +49,38 @@ void CreateContacts(std::vector<Body>& bodies, std::vector<Contact>& contacts)
 
 void SeparateContacts(std::vector<Contact>&contacts)
 { 
-		for (auto& contact : contacts)
-		{
-			float totalInverseMass = contact.bodyA->inverseMass + contact.bodyB->inverseMass;
-			Vector2 separation = contact.normal * (contact.depth / totalInverseMass);
-			contact.bodyA->position = contact.bodyA->position - (separation * contact.bodyA->inverseMass);
-			contact.bodyB->position = contact.bodyB->position + (separation * contact.bodyB->inverseMass);
-		}
+	for (auto& contact : contacts)
+	{
+		float totalInverseMass = contact.bodyA->inverseMass + contact.bodyB->inverseMass;
+		Vector2 separation = contact.normal * (contact.depth / totalInverseMass);
+		contact.bodyA->position = contact.bodyA->position + (separation * contact.bodyA->inverseMass);
+		contact.bodyB->position = contact.bodyB->position - (separation * contact.bodyB->inverseMass);
+	}
+}
+
+void ResolveContacts(std::vector<Contact>&contacts)
+{
+	for (auto& contact : contacts)
+	{
+		// compute relative velocity
+		Vector2 rv = contact.bodyA->velocity - contact.bodyB->velocity;
+		// project relative velocity onto the contact normal
+		float nv = Vector2DotProduct(rv, contact.normal);
+
+		// skip if bodies are separating
+		if (nv > 0) continue;
+
+		// total inverse mass = (1/mA + 1/mB)
+		float totalInverseMass = contact.bodyA->inverseMass + contact.bodyB->inverseMass;
+		// impulse scalar = -(1 + restitution) * vn / (1/mA + 1/mB)
+		float impulseMagnitude = -(1 + contact.restitution) * nv / totalInverseMass;
+
+		// impulse vector along contact normal
+		Vector2 impulse = contact.normal * impulseMagnitude;
+
+		// apply equal and opposite impulses
+		contact.bodyA->AddForce(impulse, Impulse);
+
+		contact.bodyB->AddForce((impulse * -1), Impulse);
+	}
 }

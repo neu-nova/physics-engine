@@ -64,7 +64,7 @@ int main ()
 			body.mass = body.size;
 			body.inverseMass = (body.body == Static) ? 0 : 1.0f / body.mass;
 			body.gravityScale = GetRandomFloat() * 0.5f * body.mass + 0.5f;
-			//body.damping = GetRandomFloat() * 0.01f + 0.99f;
+			body.damping = GetRandomFloat() * 0.01f + 0.99f;
 
 
 			world.AddBody(body);

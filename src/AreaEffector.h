@@ -1,11 +1,12 @@
 #pragma once
 #include "Effector.h"
 
-class PointEffector : public Effector
+class AreaEffector : public Effector
 {
 public:
-	PointEffector(Vector2 position, float size, float forceMagnitude) :
-		Effector{position, size},
+	AreaEffector(Vector2 position, float size, float angle, float forceMagnitude) :
+		Effector{ position, size },
+		angle{ angle },
 		forceMagnitude{ forceMagnitude }
 	{
 	}
@@ -14,5 +15,6 @@ public:
 	void Draw() override;
 
 private:
+	float angle;
 	float forceMagnitude;
 };

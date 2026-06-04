@@ -17,6 +17,13 @@ enum ForceMode
 	VelocityChange
 };
 
+enum BallType
+{
+	NONE,
+	IN,
+	OUT,
+};
+
 
 struct Body
 {
@@ -31,6 +38,7 @@ struct Body
 	float gravityScale = 1.0f;
 	float damping = 0.0f;
 	Color color = RED;
+	BallType balltype;
 
 	void AddForce(const Vector2& force, ForceMode forceMode = Force);
 	void Draw() const;

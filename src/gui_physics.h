@@ -125,7 +125,7 @@ GuiPhysicsState InitGuiPhysics(void)
     state.BodySizeValue = 0.3f;
     state.BodyGravityValue = 1.0f;
     state.BodyRestitutionValue = 0.5f;
-    state.BodyDampingValue = 1.00f;
+    state.BodyDampingValue = .70f;
     state.BodyTypeEditMode = false;
     state.BodyTypeActive = 0;
     state.SpringStiffnessValue = 10.0f;   

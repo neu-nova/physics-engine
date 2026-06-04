@@ -5,19 +5,18 @@
 #include "Spring.h"
 
 Vector2 World::gravity = { 0, 9.81f };
+float World::springmultiplier = 1.0f;
 
 void World::Step(float dt)
 {
 
 	//for (Body& body : bodies) body.acceleration = { 0,0 };
-	for (Body& body : bodies) body.AddForce(gravity * body.mass * body.gravityScale, Acceleration);
+	for (Body& body : bodies) body.AddForce(gravity * body.mass * body.gravityScale * -1, Acceleration);
 
 
     for (auto& effector : effectors) effector->Apply(bodies);
 
-	for (auto& spring : springs) spring->Apply();
-
-
+	for (auto& spring : springs) spring->Apply(springmultiplier);
 
     for (Body& body : bodies) body.Step(dt);
 
@@ -28,14 +27,22 @@ void World::Step(float dt)
 
 void World::Draw() const
 {
+	
+	for(float x = boundsMin.x; x < (boundsMax.x); x += 1)
+	{
+		DrawLineV(Vector2{ x, boundsMin.y }, Vector2{ x, boundsMax.y }, DARKGRAY);
+	}
+	for (float y = boundsMin.y; y < (boundsMax.y); y += 1)
+	{
+		DrawLineV(Vector2{ boundsMin.x, y }, Vector2{ boundsMax.x, y }, DARKGRAY);
+	}
+	
+
 	for (auto& effector : effectors) effector->Draw();
 	for (const Body& body : bodies) body.Draw();
+	for (auto& spring : springs) spring->Draw();
 }
 
-void World::AddSpring(Body& bodyA, Body& bodyB, float restLength, float stiffness)
-{
-	springs.emplace_back(new Spring(&bodyA, &bodyB, restLength, stiffness));
-}
 
 Body* World::GetBodyIntersect(const Vector2& point)
 {
@@ -89,4 +96,9 @@ void World::AddBody(Body& body)
 void World::AddEffector(Effector* effector)
 {
 	effectors.push_back(effector);
+}
+
+void World::AddSpring(Body& bodyA, Body& bodyB, float restLength, float stiffness, float damping)
+{
+	springs.push_back(new Spring(&bodyA, &bodyB, restLength, stiffness, damping));
 }

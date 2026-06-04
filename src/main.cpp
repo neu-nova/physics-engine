@@ -56,10 +56,14 @@ int main ()
 
 	SetTargetFPS(60);
 
-	World world;
+	World worldtest;
+	World title;
+	World lvlone;
 	WorldCamera world_camera(Vector2{ GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f }, 5);
 
-	world.SetBounds(world_camera.ScreenToWorld({ 0, (float)GetScreenHeight() }), world_camera.ScreenToWorld({ (float)GetScreenWidth(), 0 }));
+	worldtest.SetBounds(world_camera.ScreenToWorld({ 0, (float)GetScreenHeight() }), world_camera.ScreenToWorld({ (float)GetScreenWidth(), 0 }));
+	title.SetBounds(world_camera.ScreenToWorld({ 0, (float)GetScreenHeight() }), world_camera.ScreenToWorld({ (float)GetScreenWidth(), 0 }));
+	lvlone.SetBounds(world_camera.ScreenToWorld({ 0, (float)GetScreenHeight() }), world_camera.ScreenToWorld({ (float)GetScreenWidth(), 0 }));
 
 	Body* selectedBody = nullptr;
 	Body* connectedBody = nullptr;
@@ -73,6 +77,12 @@ int main ()
 	world_camera.Begin()
 	world.Draw()
 	*/
+
+	World* currentworld = &worldtest;
+	bool test = false;
+	int lives = 3;
+	float timer = 10.0f;
+	bool titleb = true;
 	
 	DrawCircleLinesV({ GetMousePosition().x, GetMousePosition().y }, 10, RED);
 
@@ -81,49 +91,78 @@ int main ()
 	{
 		float dt = GetFrameTime();
 
-		if (IsKeyPressed(KEY_SPACE))
+		if (IsKeyPressed(KEY_SPACE) && test)
 		{
 			state.SimulateActive = !state.SimulateActive;
 		}
-		if (IsKeyPressed(KEY_TAB))
+		if (IsKeyPressed(KEY_TAB) && test)
 		{
 			state.PhysicsPanelActive = !state.PhysicsPanelActive;
 		}
 
 		World::SetGravity({ 0, state.GravityValue });
 
-		if (IsKeyDown(KEY_C)) world.GetBodies().clear();
+		if (IsKeyDown(KEY_C)) currentworld->GetBodies().clear();
 
-		bool mouseOverGui = state.PhysicsPanelActive && CheckCollisionPointRec(GetMousePosition(), Rectangle{ state.anchor02.x, state.anchor02.y });
+		bool mouseOverGui = state.PhysicsPanelActive && CheckCollisionPointRec(GetMousePosition(), Rectangle{ state.anchor02.x, state.anchor02.y, 304, 664 });
 
-		if (!mouseOverGui)
+		if (!mouseOverGui && test)
 		{
 			if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) || (IsKeyDown(KEY_GRAVE)) && (IsMouseButtonDown(MOUSE_BUTTON_LEFT)))
 			{
 				if (IsKeyDown(KEY_LEFT_SHIFT))
 				{
-					AddEffector(world, world_camera);
+					AddEffector(*currentworld, world_camera);
 				}
 				else
 				{
-					AddBody(world, world_camera);
+					AddBody(*currentworld, world_camera);
 				}
 
 			}
-
 			if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
 			{
-				selectedBody = world.GetBodyIntersect(world_camera.ScreenToWorld(GetMousePosition()));
+				selectedBody = currentworld->GetBodyIntersect(world_camera.ScreenToWorld(GetMousePosition()));
 			}
 
-			if (selectedBody && IsMouseButtonDown(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_LEFT_CONTROL))
+
+			// spring
+			if (selectedBody)
 			{
-				Vector2 position = world_camera.ScreenToWorld(GetMousePosition()); //screentoworld
-				Vector2 force = Spring::GetSpringForce(position, selectedBody->position, 1.0f, 3.0f);
-				selectedBody->AddForce(force);
+				if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+				{
+					Vector2 position = world_camera.ScreenToWorld(GetMousePosition());
+					if (IsKeyDown(KEY_LEFT_CONTROL))
+					{
+						Vector2 force = Spring::GetSpringForce(position, selectedBody->position, 1.0f, 3.0f);
+						selectedBody->AddForce(force);
+					}
+					else
+					{
+						connectedBody = currentworld->GetBodyIntersect(world_camera.ScreenToWorld(GetMousePosition()));
+					}
+					DrawLineV(world_camera.WorldToScreen(position), world_camera.WorldToScreen(selectedBody->position), WHITE);
+				}
+				else
+				{
+					if (selectedBody && connectedBody)
+					{
+						float distance = Vector2Distance(selectedBody->position, connectedBody->position);
+						if (state.SpringAutoLengthChecked)
+						{
+							currentworld->AddSpring(*selectedBody, *connectedBody, distance, state.SpringStiffnessValue, state.SpringDampingValue);
+						}
+						else
+						{
+							currentworld->AddSpring(*selectedBody, *connectedBody, state.SpringLengthValue, state.SpringStiffnessValue, state.SpringDampingValue);
+						}
+					}
 
-				DrawLineV(world_camera.WorldToScreen(position), world_camera.WorldToScreen(selectedBody->position), GREEN); //worldtoscreen
+					selectedBody = nullptr;
+					connectedBody = nullptr;
+				}
 			}
+
 
 		}
 
@@ -132,7 +171,7 @@ int main ()
 			timeAccum += dt;
 			while (timeAccum > fixedTimeStep)
 			{
-				world.Step(fixedTimeStep);
+				currentworld->Step(fixedTimeStep);
 				timeAccum -= fixedTimeStep;
 			}
 		}
@@ -148,19 +187,34 @@ int main ()
 		ClearBackground(BLACK);
 
 		std::string fpstext = "FPS: ";
-
-
 		fpstext += std::to_string(GetFPS());
 
+		std::string livestext = "LIVES: ";
+		livestext += std::to_string(lives);
+
 		DrawText(fpstext.c_str(), 10, 10, 20, WHITE);
+		DrawText(livestext.c_str(), 10, 40, 20, WHITE);
 
 		world_camera.Begin();
-		world.Draw();
+		if (titleb)
+		{
+			DrawText("Marble Mayhem", world_camera.WorldToScreen({ -1.0f, 0.0f }).x, world_camera.WorldToScreen({ -1.0f, 0.0f }).y, 50, WHITE);
+			DrawText("PRESS SPACE TO START", world_camera.WorldToScreen({ -1.0f, -1.0f }).x, world_camera.WorldToScreen({ -1.0f, -1.0f }).y, 20, WHITE);
+		}
+		else
+		{
+			currentworld->Draw();
+		}
 		world_camera.End();
 
-		if (selectedBody)
+		if (selectedBody && test)
 		{
-			DrawCircleLinesV(selectedBody->position, selectedBody->size * 1.05, RED	);
+			DrawCircleLinesV(world_camera.WorldToScreen(selectedBody->position), selectedBody->size * 1.05 * world_camera.GetPixelsPerUnit(), RED);
+		}
+
+		if (connectedBody && test)
+		{
+			DrawCircleLinesV(world_camera.WorldToScreen(connectedBody->position), connectedBody->size * 1.05 * world_camera.GetPixelsPerUnit(), RED);
 		}
 
 
@@ -195,6 +249,7 @@ void AddBody(World& world, WorldCamera& camera)
 	body.inverseMass = (body.body == Static) ? 0 : 1.0f / body.mass;
 	body.gravityScale = state.BodyGravityValue;
 	body.damping = state.BodyDampingValue;
+	body.color = ColorFromHSV(GetRandomFloat(360), 1, 1);
 
 
 	world.AddBody(body);
@@ -203,7 +258,7 @@ void AddBody(World& world, WorldCamera& camera)
 void AddEffector(World& world, WorldCamera& camera)
 {
 	Vector2 position = camera.ScreenToWorld(GetMousePosition());
-	float size = state.EffectorSizeValue;
+	float size = state.BodySizeValue *0.5;
 	switch (state.EffectorTypeActive)
 	{
 	case 0:

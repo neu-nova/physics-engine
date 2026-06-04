@@ -10,13 +10,15 @@ class Spring
 
 		float restLength;
 		float stiffness;
+		float damping;
 
 		Spring() = default;
-		Spring(Body* bodyA, Body* bodyB, float restLength, float stiffness = 1) :
+		Spring(Body* bodyA, Body* bodyB, float restLength, float stiffness = 1, float damping = 0) :
 			bodyA{ bodyA },
 			bodyB{ bodyB },
 			restLength{ restLength },
-			stiffness{ stiffness }
+			stiffness{ stiffness },
+			damping{ damping }
 		{
 		}
 

@@ -30,6 +30,7 @@ struct Body
 	float restitution = 0.9f;
 	float gravityScale = 1.0f;
 	float damping = 0.0f;
+	Color color = RED;
 
 	void AddForce(const Vector2& force, ForceMode forceMode = Force);
 	void Draw() const;

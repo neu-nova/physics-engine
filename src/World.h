@@ -13,7 +13,7 @@ public:
 
 	void AddBody(Body& body);
 	void AddEffector(class Effector* effector);
-	void AddSpring(Body& bodyA, Body& bodyB, float restLength, float stiffness);
+	void AddSpring(Body& bodyA, Body& bodyB, float restLength, float stiffness, float damping);
 
 	std::vector<Body>& GetBodies() { return bodies; }
 	const std::vector<Body>& GetBodies() const { return bodies; }
@@ -21,6 +21,8 @@ public:
 	Body* GetBodyIntersect(const Vector2& point);
 
 	static void SetGravity(const Vector2& g) { gravity = g; }
+	static void SetSpringMultiplier(float multiplier) { springmultiplier = multiplier; }
+
 	void SetBounds(Vector2 min, Vector2 max) { boundsMin = min; boundsMax = max; }
 
 private:
@@ -28,6 +30,7 @@ private:
 
 private:
 	static Vector2 gravity;
+	static float springmultiplier;
 
 	std::vector<Body> bodies;
 	std::vector<class Effector*> effectors;

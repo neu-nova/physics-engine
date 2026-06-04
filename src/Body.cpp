@@ -26,7 +26,7 @@ void Body::AddForce(const Vector2& force, ForceMode forceMode)
 
 void Body::Draw() const
 {
-	DrawCircleV(position, size, WHITE);
+	DrawCircleV(position, size, color);
 	DrawCircleLinesV(position, size, RED);
 }
 

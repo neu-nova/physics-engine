@@ -8,7 +8,7 @@ class World
 public:
 	World() { bodies.reserve(1000); }
 
-	void Step(float dt);
+	void Step(float dt, class ma_engine* engine);
 	void Draw() const;
 
 	void AddBody(Body& body);
@@ -26,7 +26,7 @@ public:
 	void SetBounds(Vector2 min, Vector2 max) { boundsMin = min; boundsMax = max; }
 
 private:
-	void UpdateCollision();
+	void UpdateCollision(class ma_engine* engine);
 
 private:
 	static Vector2 gravity;

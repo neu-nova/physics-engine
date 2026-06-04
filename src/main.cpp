@@ -18,9 +18,8 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include "Spring.h"
 #include "world_camera.h"
 #include <array>
-
 #include <string>
-
+#include <iostream>
 #include "raylib.h"
 #include "raymath.h"
 
@@ -31,6 +30,10 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #pragma warning(disable: 4576)
 #include "gui_physics.h"
 #pragma warning(pop)
+#include "miniaudio.h"
+
+static ma_sound g_loopingSound;
+static bool g_loopingSoundInited = false;
 
 GuiPhysicsState state;
 
@@ -40,9 +43,18 @@ Body CreatePlayer(World& world, WorldCamera& camera);
 bool CheckWinState(Vector2 goalposition, float goalradius, World& world, WorldCamera& camera);
 void MakeShot(World& world, Body& playbody, Vector2 mouseposition, WorldCamera& camera);
 void AddMarble(World& world, WorldCamera& camera, int type, Vector2 position);
+bool PlayLoopingSound(ma_engine* engine, const char* fileName);
+void StopAndUninitLoopingSound();
 
 int main ()
 {
+	ma_engine engine;
+
+	if (ma_engine_init(NULL, &engine) != MA_SUCCESS) {
+		std::cerr << "Failed to initialize audio engine.\n";
+		return -1;
+	}
+	PlayLoopingSound(&engine, "play.mp3");
 
 	SetRandomSeed(5);
 
@@ -68,6 +80,7 @@ int main ()
 	World lvlone;
 	World lvltwo;
 	WorldCamera world_camera(Vector2{ GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f }, 5);
+
 
 
 	worldtest.SetBounds(world_camera.ScreenToWorld({ 0, (float)GetScreenHeight() }), world_camera.ScreenToWorld({ (float)GetScreenWidth(), 0 }));
@@ -100,6 +113,7 @@ int main ()
 	bool playvalid = false;
 	bool win = false;
 	bool lose = false;
+	bool credits = true;
 
 	Vector2 goalposition = { 4.0f, 0.0f };
 	float goalradius = 3.0f;
@@ -107,8 +121,9 @@ int main ()
 	DrawCircleLinesV({ GetMousePosition().x, GetMousePosition().y }, 10, RED);
 
 	// game loop
-	while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
+	while (!WindowShouldClose()) // run the loop untill the user presses ESCAPE or presses the Close button on the window
 	{
+		//play game music, change credits
 		float dt = GetFrameTime();
 
 		if (IsKeyPressed(KEY_SPACE) && test)
@@ -125,7 +140,11 @@ int main ()
 			win = false;
 			currentlvl++;
 			newworld = true;
-
+			if (currentlvl == 0)
+			{
+				currentlvl = 0;
+				titleb = true;
+			}
 		}
 		if (IsKeyPressed(KEY_R) && !titleb) // restart level
 		{
@@ -134,12 +153,19 @@ int main ()
 			lose = false;
 		}
 		
+		if (IsKeyPressed(KEY_ZERO))
+		{
+			currentlvl = 0;
+			titleb = true;
+			win = false;
+		}
 		if (IsKeyPressed(KEY_ONE))
 		{
 			currentlvl = 1;
 			newworld = true;
 			titleb = false;
 			win = false;
+			lose = false;
 		}
 		if (IsKeyPressed(KEY_TWO))
 		{
@@ -147,6 +173,7 @@ int main ()
 			newworld = true;
 			titleb = false;
 			win = false;
+			lose = false;
 		}
 		if (IsKeyPressed(KEY_THREE))
 		{
@@ -154,6 +181,7 @@ int main ()
 			newworld = true;
 			titleb = false;
 			win = false;
+			lose = false;
 		}
 		if (IsKeyPressed(KEY_FOUR))
 		{
@@ -161,6 +189,7 @@ int main ()
 			newworld = true;
 			titleb = false;
 			win = false;
+			lose = false;
 		}
 		if (IsKeyPressed(KEY_FIVE))
 		{
@@ -168,6 +197,7 @@ int main ()
 			newworld = true;
 			titleb = false;
 			win = false;
+			lose = false;
 		}
 		if (IsKeyPressed(KEY_SIX))
 		{
@@ -175,15 +205,45 @@ int main ()
 			newworld = true;
 			titleb = false;
 			win = false;
+			lose = false;
+		}
+		if (IsKeyPressed(KEY_SEVEN))
+		{
+			currentlvl = 7;
+			newworld = true;
+			titleb = false;
+			win = false;
+			lose = false;
+		}
+		if (IsKeyPressed(KEY_EIGHT))
+		{
+			currentlvl = 8;
+			newworld = true;
+			titleb = false;
+			win = false;
+			lose = false;
+		}
+		if (IsKeyPressed(KEY_NINE))
+		{
+			currentlvl = 9;
+			newworld = true;
+			titleb = false;
+			win = false;
+			lose = false;
+		}
+		if(IsKeyPressed(KEY_ZERO))
+		{
+			currentlvl = 10;
+			newworld = true;
+			titleb = false;
+			win = false;
+			lose = false;
 		}
 
 		if (newworld)
 		{
 			makeplayer = true;
 			currentworld->GetBodies().clear();
-			// IMPORTANT CHANGE:
-			// CreatePlayer returns a Body by value. Taking the address of that temporary leads to a dangling pointer.
-			// Create the player, add a copy into the world's bodies, then keep a pointer to the stored body inside the world.
 			Body newPlayer = CreatePlayer(*currentworld, world_camera);
 			currentworld->AddBody(newPlayer);
 			playbody = &currentworld->GetBodies().back();
@@ -224,6 +284,7 @@ int main ()
 				AddMarble(*currentworld, world_camera, 1, { -1.0f, 0.0f });
 				goalposition = { 6.0f, 5.0f };
 				goalradius = 2.0f;
+				break;
 			case 6:
 				shots = 5;
 				AddMarble(*currentworld, world_camera, 1, { -1.0f, 0.0f });
@@ -232,18 +293,114 @@ int main ()
 				AddMarble(*currentworld, world_camera, 1, { 3.0f, 0.0f });
 				goalposition = { 4.0f, 0.0f };
 				goalradius = 2.0f;
-
+				break;
+			case 7:
+				shots = 3;
+				AddMarble(*currentworld, world_camera, 2, { -1.0f, 0.0f });
+				goalposition = { -2.0f, -3.0f };
+				goalradius = 11.0f;
+				break;
+			case 8:
+				shots = 1;
+				AddMarble(*currentworld, world_camera, 1, { -1.0f, 0.0f });
+				goalposition = { 4.0f, 0.0f };
+				goalradius = 1.0f;
+				break;
+			case 9:
+				shots = 3;
+				AddMarble(*currentworld, world_camera, 2, { -1.0f, 1.0f });
+				AddMarble(*currentworld, world_camera, 2, { -1.0f, 0.0f });
+				AddMarble(*currentworld, world_camera, 2, { -1.0f, -1.0f });
+				goalposition = { -4.0f, 0.0f };
+				goalradius = 10.0f;
+				break;
+			case 10:
+				shots = 3;
+				AddMarble(*currentworld, world_camera, 1, { -1.0f, -1.0f });
+				AddMarble(*currentworld, world_camera, 2, { 0.0f, 1.0f });
+				AddMarble(*currentworld, world_camera, 2, { 0.0f, -1.0f });
+				AddMarble(*currentworld, world_camera, 1, { -1.0f, 1.0f });
+				goalposition = { 7.0f, 0.0f };
+				goalradius = 5.0f;
+				break;
+			case 11:
+				win = true;
 				break;
 			}
 			playvalid = true;
 
 			newworld = false;
+
+			if ((currentlvl == 11 && !credits) || (currentlvl != 11 && credits))
+			{
+				StopAndUninitLoopingSound();
+				{
+					switch (currentlvl)
+					{
+					case 0:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 1:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 2:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 3:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 4:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 5:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 6:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 7:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 8:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 9:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 10:
+						PlayLoopingSound(&engine, "play.mp3");
+						credits = false;
+						break;
+					case 11:
+						PlayLoopingSound(&engine, "victory.mp3");
+						currentlvl = -1;
+						credits = true;
+						break;
+					default:
+						PlayLoopingSound(&engine, "play.mp3");
+						break;
+					}
+				}
+			}
+			
 		}
 
 		if (playvalid && playbody && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
 		{
 			MakeShot(*currentworld, *playbody, world_camera.ScreenToWorld(GetMousePosition()), world_camera);
 			shots--;
+			//shoot sound
+			ma_engine_play_sound(&engine, "hit.mp3", NULL);
 			playvalid = false;
 			timer = 7.0f;
 		}
@@ -251,10 +408,12 @@ int main ()
 		if (!playvalid)
 		{
 			timer -= dt;
-			if (timer <= 0)
+			if (timer <= 0 && !(win || lose))
 			{
 				if (CheckWinState(goalposition, goalradius, *currentworld, world_camera))
 				{
+					//winsound
+					ma_engine_play_sound(&engine, "win.mp3", NULL);
 					win = true;
 				}
 				else if (shots > 0)
@@ -267,6 +426,8 @@ int main ()
 				}
 				else
 				{
+					//losesound
+					ma_engine_play_sound(&engine, "lose.mp3", NULL);
 					lose = true;
 				}
 
@@ -342,7 +503,7 @@ int main ()
 			timeAccum += dt;
 			while (timeAccum > fixedTimeStep)
 			{
-				currentworld->Step(fixedTimeStep);
+				currentworld->Step(fixedTimeStep, &engine);
 				timeAccum -= fixedTimeStep;
 			}
 		}
@@ -360,19 +521,30 @@ int main ()
 		std::string fpstext = "FPS: ";
 		fpstext += std::to_string(GetFPS());
 
+		std::string leveltext = "LEVEL: ";
+		leveltext += std::to_string(currentlvl);
+
 		std::string livestext = "SHOTS REMAINING: ";
 		livestext += std::to_string(shots);
 
 		DrawText(fpstext.c_str(), 10, 10, 20, WHITE);
 		if (currentlvl > 0)
 		{
-			DrawText(livestext.c_str(), 10, 40, 20, WHITE);
+			DrawText(leveltext.c_str(), 10, 40, 20, WHITE);
+			DrawText(livestext.c_str(), 10, 70, 20, WHITE);
 		}
 
 		if (win)
 		{
-			DrawText("Level Complete!", width / 2 - MeasureText("Level Complete!", 120) / 2, height / 2 - 100, 120, WHITE);
-			DrawText("Press Space to Continue!", width / 2 - MeasureText("Press Space to Continue!", 40) / 2, height / 2 + 20, 40, WHITE);
+			if (currentlvl == -1)
+			{
+				DrawText("Game Complete!", width / 2 - MeasureText("Game Complete!", 120) / 2, height / 2 - 100, 120, WHITE);
+				DrawText("Press Space to Replay!", width / 2 - MeasureText("Press Space to Replay!", 40) / 2, height / 2 + 20, 40, WHITE);
+			}
+			else {
+				DrawText("Level Complete!", width / 2 - MeasureText("Level Complete!", 120) / 2, height / 2 - 100, 120, WHITE);
+				DrawText("Press Space to Continue!", width / 2 - MeasureText("Press Space to Continue!", 40) / 2, height / 2 + 20, 40, WHITE);
+			}
 		}
 
 		if (lose)
@@ -386,7 +558,7 @@ int main ()
 			case 0:
 				break;
 			case 1:
-				DrawText("Shoot the gren marble by positioning your mouse behind the marble!", 10, height - 140, 30, WHITE);
+				DrawText("Shoot the green marble by positioning your mouse behind the marble!", 10, height - 140, 30, WHITE);
 				DrawText("Get all blue marbles into the goal!", 10, height  - 100, 30, WHITE);
 				DrawText("The position of green marbles don't matter!", 10, height - 60, 30, WHITE);
 				break;
@@ -436,9 +608,32 @@ int main ()
 		EndDrawing();
 	}
 
+	ma_engine_uninit(&engine);
+
 	// destroy the window and cleanup the OpenGL context
 	CloseWindow();
 	return 0;
+}
+
+bool PlayLoopingSound(ma_engine* engine, const char* filePath)
+{
+	// Use stream for music; use MA_SOUND_FLAG_DECODE for short effects if you prefer fully decoded audio.
+	ma_result r = ma_sound_init_from_file(engine, filePath, MA_SOUND_FLAG_STREAM | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL, NULL, &g_loopingSound);
+	if (r != MA_SUCCESS) return false;
+
+	ma_sound_set_looping(&g_loopingSound, MA_TRUE);
+	ma_sound_start(&g_loopingSound);
+
+	g_loopingSoundInited = true;
+	return true;
+}
+
+void StopAndUninitLoopingSound()
+{
+	if (!g_loopingSoundInited) return;
+	ma_sound_stop(&g_loopingSound);
+	ma_sound_uninit(&g_loopingSound);
+	g_loopingSoundInited = false;
 }
 
 void AddMarble(World& world, WorldCamera& camera, int type, Vector2 position)

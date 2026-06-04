@@ -3,11 +3,12 @@
 #include "raymath.h"
 #include "Effector.h"
 #include "Spring.h"
+#include "miniaudio.h"
 
 Vector2 World::gravity = { 0, 9.81f };
 float World::springmultiplier = 1.0f;
 
-void World::Step(float dt)
+void World::Step(float dt, ma_engine* engine)
 {
 
 	//for (Body& body : bodies) body.acceleration = { 0,0 };
@@ -20,7 +21,7 @@ void World::Step(float dt)
 
     for (Body& body : bodies) body.Step(dt);
 
-	for (int i = 0; i < 4; i++) UpdateCollision();
+	for (int i = 0; i < 4; i++) UpdateCollision(engine);
 
 	for (auto& body : bodies) body.acceleration = { 0,0 };
 }
@@ -56,32 +57,40 @@ Body* World::GetBodyIntersect(const Vector2& point)
 	return nullptr;
 }
 
-void World::UpdateCollision()
+void World::UpdateCollision(ma_engine* engine)
 {
 	contacts.clear();
 	CreateContacts(bodies, contacts);
-	SeparateContacts(contacts);
+	SeparateContacts(contacts, engine);
 	ResolveContacts(contacts);
 
 	for (Body& body : bodies)
 	{
 		if (body.position.x + body.size > boundsMax.x)
 		{
+			//hit sound
+			ma_engine_play_sound(engine, "collide.mp3", NULL);
 			body.position.x = boundsMax.x - body.size;
 			body.velocity.x *= -body.restitution;
 		}
 		if (body.position.x - body.size < boundsMin.x)
 		{
+			//hit sound
+			ma_engine_play_sound(engine, "collide.mp3", NULL);
 			body.position.x = boundsMin.x + body.size;
 			body.velocity.x *= -body.restitution;
 		}
 		if (body.position.y + body.size > boundsMax.y)
 		{
+			//hit sound
+			ma_engine_play_sound(engine, "collide.mp3", NULL);
 			body.position.y = boundsMax.y - body.size;
 			body.velocity.y *= -body.restitution;
 		}
 		if (body.position.y - body.size < boundsMin.y)
 		{
+			//hit sound
+			ma_engine_play_sound(engine, "collide.mp3", NULL);
 			body.position.y = boundsMin.y + body.size;
 			body.velocity.y *= -body.restitution;
 		}

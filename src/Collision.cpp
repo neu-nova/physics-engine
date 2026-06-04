@@ -1,7 +1,7 @@
 #include "Collision.h"
 #include "Random.h"
 #include "raymath.h"
-
+#include "miniaudio.h"
 bool Intersects(const Body& bodyA, const Body& bodyB)
 {
 	float distanceSqr = Vector2DistanceSqr(bodyA.position, bodyB.position);
@@ -47,10 +47,12 @@ void CreateContacts(std::vector<Body>& bodies, std::vector<Contact>& contacts)
 	}
 }
 
-void SeparateContacts(std::vector<Contact>&contacts)
+void SeparateContacts(std::vector<Contact>&contacts, ma_engine* engine)
 { 
 	for (auto& contact : contacts)
 	{
+		//hit sound
+		ma_engine_play_sound(engine, "collide.mp3", NULL);
 		float totalInverseMass = contact.bodyA->inverseMass + contact.bodyB->inverseMass;
 		Vector2 separation = contact.normal * (contact.depth / totalInverseMass);
 		contact.bodyA->position = contact.bodyA->position + (separation * contact.bodyA->inverseMass);
